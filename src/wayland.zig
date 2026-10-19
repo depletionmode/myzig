@@ -1047,7 +1047,10 @@ pub fn run(state: anytype, comptime view: fn (@TypeOf(state), *ui.Context) void,
     defer if (egl) |*e| e.close();
     if (choice.kind != .cpu) gpu = openGpu(gpa, display, w.surface, size, choice, uncapped, &egl);
     if (print_stats) sys.print("myzig: Wayland{s}, {s}\n", .{ if (w.csd) " (MyZig's decorations)" else "", if (gpu) |*g| g.api() else "drawing on the CPU" });
-    if (gpu != null) rend.raster = false;
+    if (gpu != null) {
+        rend.raster = false;
+        rend.retain_pixels = false;
+    }
     if (dump != null) if (gpu) |*g| g.capture();
 
     const Sh = Shell(@TypeOf(state), view);
@@ -1132,6 +1135,7 @@ pub fn run(state: anytype, comptime view: fn (@TypeOf(state), *ui.Context) void,
                         if (egl) |*eg| eg.close();
                         egl = null;
                         rend.raster = true;
+                        rend.retain_pixels = true;
                         rend.invalidate();
                         w.need_frame = true;
                         w.reconfigured = true;
