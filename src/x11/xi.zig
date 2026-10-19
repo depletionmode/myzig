@@ -116,8 +116,9 @@ pub const Smooth = struct {
         if (XQueryExtension(dpy, "XInputExtension", &opcode, &ev, &err) == 0) return null;
         var lib = std.DynLib.open("libXi.so.6") catch return null;
         var s = Smooth{ .lib = lib, .fns = undefined, .opcode = opcode };
-        inline for (@typeInfo(Fns).@"struct".fields) |f| {
-            @field(s.fns, f.name) = lib.lookup(f.type, f.name) orelse {
+        const ti = @typeInfo(Fns).@"struct";
+        inline for (ti.field_names, ti.field_types) |name, ftype| {
+            @field(s.fns, name) = lib.lookup(ftype, name) orelse {
                 lib.close();
                 return null;
             };

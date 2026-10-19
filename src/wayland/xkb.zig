@@ -60,16 +60,18 @@ pub const Keyboard = struct {
     pub fn open() !Keyboard {
         var k = Keyboard{};
         var dl = std.DynLib.open("libxkbcommon.so.0") catch try std.DynLib.open("libxkbcommon.so");
-        inline for (@typeInfo(Lib).@"struct".fields) |f| {
-            @field(k.lib, f.name) = dl.lookup(f.type, "xkb_" ++ f.name) orelse {
+        const lib_ti = @typeInfo(Lib).@"struct";
+        inline for (lib_ti.field_names, lib_ti.field_types) |name, ftype| {
+            @field(k.lib, name) = dl.lookup(ftype, "xkb_" ++ name) orelse {
                 dl.close();
                 return error.MissingSymbol;
             };
         }
         var cl: ComposeLib = undefined;
         var all = true;
-        inline for (@typeInfo(ComposeLib).@"struct".fields) |f| {
-            if (dl.lookup(f.type, "xkb_" ++ f.name)) |p| @field(cl, f.name) = p else all = false;
+        const compose_ti = @typeInfo(ComposeLib).@"struct";
+        inline for (compose_ti.field_names, compose_ti.field_types) |name, ftype| {
+            if (dl.lookup(ftype, "xkb_" ++ name)) |p| @field(cl, name) = p else all = false;
         }
         if (all) k.compose_lib = cl;
         k.dl = dl;
@@ -111,7 +113,7 @@ pub const Keyboard = struct {
         if (k.compose_lib) |cl| if (k.compose == null) {
             const locale = env.get("LC_ALL") orelse env.get("LC_CTYPE") orelse env.get("LANG") orelse "C";
             var buf: [64]u8 = undefined;
-            const z = std.fmt.bufPrintZ(&buf, "{s}", .{locale}) catch "C";
+            const z = std.fmt.bufPrintSentinel(&buf, "{s}", .{locale}, 0) catch "C";
             k.compose_table = cl.compose_table_new_from_locale(k.ctx.?, z, 0);
             if (k.compose_table) |t| k.compose = cl.compose_state_new(t, 0);
         };

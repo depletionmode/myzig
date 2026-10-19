@@ -3,7 +3,7 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-    const strip = b.option(bool, "strip", "Strip debug info from executables") orelse (optimize != .Debug);
+    const strip = b.option(bool, "strip", "Strip debug info from executables") orelse (optimize != .debug);
 
     const mod = b.addModule("myzig", .{
         .root_source_file = b.path("src/myzig.zig"),
@@ -43,7 +43,8 @@ pub fn build(b: *std.Build) void {
         });
         if (only == null or std.mem.eql(u8, only.?, name)) b.installArtifact(exe);
         const run = b.addRunArtifact(exe);
-        if (b.args) |a| run.addArgs(a);
+        // Arguments after `--` on the zig build command line are passed
+        // through to run steps automatically (no b.args in 0.17).
         b.step(name, "Run the " ++ name ++ " example").dependOn(&run.step);
         const t = b.addTest(.{ .root_module = exe.root_module });
         test_step.dependOn(&b.addRunArtifact(t).step);

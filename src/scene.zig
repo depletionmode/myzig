@@ -212,7 +212,7 @@ pub const Renderer = struct {
     gpa: std.mem.Allocator,
     last: std.ArrayListUnmanaged(Op) = .empty,
     last_layers: std.ArrayListUnmanaged(Layer) = .empty,
-    shifts: [16]i32 = .{0} ** 16,
+    shifts: [16]i32 = @splat(0),
     /// scrolls are the layers whose pixels moved this frame: a window
     /// presenting the damage moves them on its side first.
     scrolls: std.ArrayListUnmanaged(Scroll) = .empty,

@@ -46,7 +46,7 @@ var fns: Fns = undefined;
 /// msg_stret is objc_msgSend_stret, which x86_64 sends the messages that
 /// return a struct in memory with.
 var msg_stret: ?*const anyopaque = null;
-var libs: [6]?std.DynLib = .{null} ** 6;
+var libs: [6]?std.DynLib = @splat(null);
 var loaded = false;
 
 const framework_paths = [_][]const u8{
@@ -61,8 +61,9 @@ const framework_paths = [_][]const u8{
 pub fn load() !void {
     if (loaded) return;
     var objc = try std.DynLib.open("/usr/lib/libobjc.A.dylib");
-    inline for (@typeInfo(Fns).@"struct".fields) |f| {
-        @field(fns, f.name) = objc.lookup(f.type, f.name) orelse return error.NoObjcRuntime;
+    const fns_ti = @typeInfo(Fns).@"struct";
+    inline for (fns_ti.field_names, fns_ti.field_types) |name, ftype| {
+        @field(fns, name) = objc.lookup(ftype, name) orelse return error.NoObjcRuntime;
     }
     if (builtin.cpu.arch == .x86_64) msg_stret = objc.lookup(*const anyopaque, "objc_msgSend_stret");
     libs[0] = objc;
@@ -114,21 +115,21 @@ pub fn msg(comptime R: type, target: anytype, comptime name: [:0]const u8, args:
     const s = sel(name);
     const fp = if (comptime stret(R)) msg_stret.? else fns.objc_msgSend;
     const A = @TypeOf(args);
-    const f = @typeInfo(A).@"struct".fields;
-    inline for (f) |field| {
-        if (field.type == comptime_int or field.type == comptime_float) @compileError("give " ++ name ++ "'s arguments their types");
+    const f = @typeInfo(A).@"struct".field_types;
+    inline for (f) |ftype| {
+        if (ftype == comptime_int or ftype == comptime_float) @compileError("give " ++ name ++ "'s arguments their types");
     }
     switch (f.len) {
         0 => return @as(*const fn (Id, Sel) callconv(.c) R, @ptrCast(@alignCast(fp)))(t, s),
-        1 => return @as(*const fn (Id, Sel, f[0].type) callconv(.c) R, @ptrCast(@alignCast(fp)))(t, s, args[0]),
-        2 => return @as(*const fn (Id, Sel, f[0].type, f[1].type) callconv(.c) R, @ptrCast(@alignCast(fp)))(t, s, args[0], args[1]),
-        3 => return @as(*const fn (Id, Sel, f[0].type, f[1].type, f[2].type) callconv(.c) R, @ptrCast(@alignCast(fp)))(t, s, args[0], args[1], args[2]),
-        4 => return @as(*const fn (Id, Sel, f[0].type, f[1].type, f[2].type, f[3].type) callconv(.c) R, @ptrCast(@alignCast(fp)))(t, s, args[0], args[1], args[2], args[3]),
-        5 => return @as(*const fn (Id, Sel, f[0].type, f[1].type, f[2].type, f[3].type, f[4].type) callconv(.c) R, @ptrCast(@alignCast(fp)))(t, s, args[0], args[1], args[2], args[3], args[4]),
-        6 => return @as(*const fn (Id, Sel, f[0].type, f[1].type, f[2].type, f[3].type, f[4].type, f[5].type) callconv(.c) R, @ptrCast(@alignCast(fp)))(t, s, args[0], args[1], args[2], args[3], args[4], args[5]),
-        7 => return @as(*const fn (Id, Sel, f[0].type, f[1].type, f[2].type, f[3].type, f[4].type, f[5].type, f[6].type) callconv(.c) R, @ptrCast(@alignCast(fp)))(t, s, args[0], args[1], args[2], args[3], args[4], args[5], args[6]),
-        8 => return @as(*const fn (Id, Sel, f[0].type, f[1].type, f[2].type, f[3].type, f[4].type, f[5].type, f[6].type, f[7].type) callconv(.c) R, @ptrCast(@alignCast(fp)))(t, s, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]),
-        9 => return @as(*const fn (Id, Sel, f[0].type, f[1].type, f[2].type, f[3].type, f[4].type, f[5].type, f[6].type, f[7].type, f[8].type) callconv(.c) R, @ptrCast(@alignCast(fp)))(t, s, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]),
+        1 => return @as(*const fn (Id, Sel, f[0]) callconv(.c) R, @ptrCast(@alignCast(fp)))(t, s, args[0]),
+        2 => return @as(*const fn (Id, Sel, f[0], f[1]) callconv(.c) R, @ptrCast(@alignCast(fp)))(t, s, args[0], args[1]),
+        3 => return @as(*const fn (Id, Sel, f[0], f[1], f[2]) callconv(.c) R, @ptrCast(@alignCast(fp)))(t, s, args[0], args[1], args[2]),
+        4 => return @as(*const fn (Id, Sel, f[0], f[1], f[2], f[3]) callconv(.c) R, @ptrCast(@alignCast(fp)))(t, s, args[0], args[1], args[2], args[3]),
+        5 => return @as(*const fn (Id, Sel, f[0], f[1], f[2], f[3], f[4]) callconv(.c) R, @ptrCast(@alignCast(fp)))(t, s, args[0], args[1], args[2], args[3], args[4]),
+        6 => return @as(*const fn (Id, Sel, f[0], f[1], f[2], f[3], f[4], f[5]) callconv(.c) R, @ptrCast(@alignCast(fp)))(t, s, args[0], args[1], args[2], args[3], args[4], args[5]),
+        7 => return @as(*const fn (Id, Sel, f[0], f[1], f[2], f[3], f[4], f[5], f[6]) callconv(.c) R, @ptrCast(@alignCast(fp)))(t, s, args[0], args[1], args[2], args[3], args[4], args[5], args[6]),
+        8 => return @as(*const fn (Id, Sel, f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7]) callconv(.c) R, @ptrCast(@alignCast(fp)))(t, s, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]),
+        9 => return @as(*const fn (Id, Sel, f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8]) callconv(.c) R, @ptrCast(@alignCast(fp)))(t, s, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]),
         else => @compileError("too many arguments"),
     }
 }

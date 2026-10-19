@@ -833,13 +833,14 @@ pub const DeviceFns = struct {
 /// function that is missing is an error, an optional one is null.
 pub fn load(comptime T: type, ctx: anytype, comptime proc: anytype) !T {
     var t: T = undefined;
-    inline for (std.meta.fields(T)) |f| {
-        const p = proc(ctx, "vk" ++ f.name);
-        if (@typeInfo(f.type) == .optional) {
-            @field(t, f.name) = if (p) |q| @ptrCast(@alignCast(q)) else null;
+    const ti = @typeInfo(T).@"struct";
+    inline for (ti.field_names, ti.field_types) |name, ftype| {
+        const p = proc(ctx, "vk" ++ name);
+        if (@typeInfo(ftype) == .optional) {
+            @field(t, name) = if (p) |q| @ptrCast(@alignCast(q)) else null;
         } else {
-            @field(t, f.name) = @ptrCast(@alignCast(p orelse {
-                sys.log(.err, "myzig: Vulkan has no vk{s}", .{f.name});
+            @field(t, name) = @ptrCast(@alignCast(p orelse {
+                sys.log(.err, "myzig: Vulkan has no vk{s}", .{name});
                 return error.MissingFunction;
             }));
         }

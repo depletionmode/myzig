@@ -140,7 +140,7 @@ pub const Renderer = struct {
     /// images_size is the image texture's side: 1 until an image is drawn.
     images_size: u32 = 0,
     instances: std.ArrayListUnmanaged(inst.Instance) = .empty,
-    frames: [frames_in_flight]Frame = .{Frame{}} ** frames_in_flight,
+    frames: [frames_in_flight]Frame = @splat(.{}),
     frame: usize = 0,
     /// offscreen is the texture drawn to without a layer.
     offscreen: Id = null,

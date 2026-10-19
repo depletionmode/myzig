@@ -252,8 +252,13 @@ test "wrapping breaks long lines into rows, and Down walks them" {
     defer fonts.deinit();
     var s = Editor{ .gpa = testing.allocator, .wrap = true };
     defer s.deinit();
-    const long = "word " ** 60;
-    try s.doc.set(testing.allocator, long);
+    const long = comptime blk: {
+        const w = "word ";
+        var text: [w.len * 60]u8 = undefined;
+        for (&text, 0..) |*c, i| c.* = w[i % w.len];
+        break :blk text;
+    };
+    try s.doc.set(testing.allocator, &long);
     s.doc.caret = 0;
     s.doc.anchor = 0;
     var h = try harness(&s, &fonts);

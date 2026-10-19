@@ -65,7 +65,7 @@ const Win = struct {
     frac_mgr: ?*p.wp_fractional_scale_manager_v1 = null,
     viewporter: ?*p.wp_viewporter = null,
     ti_mgr: ?*p.zwp_text_input_manager_v3 = null,
-    outputs: [8]?Output = .{null} ** 8,
+    outputs: [8]?Output = @splat(null),
 
     surface: *p.wl_surface = undefined,
     xdg_surface: *p.xdg_surface = undefined,
@@ -986,7 +986,7 @@ pub fn run(state: anytype, comptime view: fn (@TypeOf(state), *ui.Context) void,
     var exe_buf: [4096]u8 = undefined;
     const exe = sys.exeName(&exe_buf);
     var app_id_buf: [64]u8 = undefined;
-    const app_id = std.fmt.bufPrintZ(&app_id_buf, "{s}", .{exe[0..@min(exe.len, 60)]}) catch "myzig";
+    const app_id = std.fmt.bufPrintSentinel(&app_id_buf, "{s}", .{exe[0..@min(exe.len, 60)]}, 0) catch "myzig";
     w.toplevel.set_app_id(app_id.ptr);
     w.toplevel.set_min_size(160, 120);
     // MYZIG_CSD=1 draws MyZig's title bar where the compositor would decorate.

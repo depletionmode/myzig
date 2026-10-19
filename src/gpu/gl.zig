@@ -62,12 +62,13 @@ pub const Gl = struct {
     /// function the driver lacks.
     pub fn load(ctx: anytype, comptime proc: fn (@TypeOf(ctx), [*:0]const u8) ?*const anyopaque) !Gl {
         var g: Gl = undefined;
-        inline for (std.meta.fields(Gl)) |f| {
-            const p = proc(ctx, "gl" ++ f.name) orelse {
-                sys.log(.err, "myzig: OpenGL has no gl{s}", .{f.name});
+        const ti = @typeInfo(Gl).@"struct";
+        inline for (ti.field_names) |name| {
+            const p = proc(ctx, "gl" ++ name) orelse {
+                sys.log(.err, "myzig: OpenGL has no gl{s}", .{name});
                 return error.MissingFunction;
             };
-            @field(g, f.name) = @ptrCast(@alignCast(p));
+            @field(g, name) = @ptrCast(@alignCast(p));
         }
         return g;
     }

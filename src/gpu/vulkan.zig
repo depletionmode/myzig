@@ -274,13 +274,13 @@ pub const Renderer = struct {
         }
         for (dirs[0..n]) |dir| {
             var dir_z: [std.fs.max_path_bytes:0]u8 = undefined;
-            const dz = std.fmt.bufPrintZ(&dir_z, "{s}", .{dir}) catch continue;
+            const dz = std.fmt.bufPrintSentinel(&dir_z, "{s}", .{dir}, 0) catch continue;
             const d = std.c.opendir(dz) orelse continue;
             defer _ = std.c.closedir(d);
             while (readdir(d)) |e| {
                 const name_ = std.mem.sliceTo(&e.name, 0);
                 if (!std.mem.endsWith(u8, name_, ".json")) continue;
-                const path = std.fmt.bufPrintZ(buf, "{s}/{s}", .{ dir, name_ }) catch continue;
+                const path = std.fmt.bufPrintSentinel(buf, "{s}/{s}", .{ dir, name_ }, 0) catch continue;
                 const body = sys.readFile(gpa, path, 64 << 10) catch continue;
                 defer gpa.free(body);
                 const key = "\"library_path\"";

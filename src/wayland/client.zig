@@ -74,8 +74,9 @@ pub fn open() !void {
     if (opened != null) return;
     var dl = std.DynLib.open("libwayland-client.so.0") catch try std.DynLib.open("libwayland-client.so");
     errdefer dl.close();
-    inline for (@typeInfo(Lib).@"struct".fields) |f| {
-        @field(lib, f.name) = dl.lookup(f.type, "wl_" ++ f.name) orelse return error.MissingSymbol;
+    const ti = @typeInfo(Lib).@"struct";
+    inline for (ti.field_names, ti.field_types) |name, ftype| {
+        @field(lib, name) = dl.lookup(ftype, "wl_" ++ name) orelse return error.MissingSymbol;
     }
     opened = dl;
 }

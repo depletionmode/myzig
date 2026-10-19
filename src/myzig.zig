@@ -37,8 +37,8 @@ pub const WindowOptions = app.WindowOptions;
 pub const Renderer = @import("gpu/choose.zig").Renderer;
 
 const debug_build = switch (@import("builtin").mode) {
-    .Debug, .ReleaseSafe => true,
-    .ReleaseFast, .ReleaseSmall => false,
+    .debug, .safe => true,
+    .fast, .small => false,
 };
 
 /// panic and std_options are for an app's root file to declare,

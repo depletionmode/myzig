@@ -329,7 +329,7 @@ fn blendSpan(px: []u32, c: Color, a: u32) void {
 }
 
 test "rrect solid center, soft corner" {
-    var buf = [_]u32{0xffffff} ** (20 * 20);
+    var buf: [20 * 20]u32 = @splat(0xffffff);
     const cv = Canvas{ .pixels = &buf, .width = 20, .height = 20, .stride = 20 };
     cv.rrect(2, 2, 16, 16, 6, Color.rgb(0, 0, 0), cv.bounds());
     try std.testing.expectEqual(@as(u32, 0), buf[10 * 20 + 10]);
